@@ -108,4 +108,33 @@
         LIMIT #{pageSize}
     </select>
 
+    <!--
+        批量查询已存在的 order_no（用于去重）
+        每 1000 个一批查询，避免 IN 子句过长
+    -->
+    <select id="selectOrderNosByOrderNos" resultType="java.lang.String">
+        SELECT order_no FROM t_order
+        WHERE order_no IN
+        <foreach item="no" collection="list" open="(" separator="," close=")">
+            #{no}
+        </foreach>
+    </select>
+
+    <!--
+        批量插入
+        使用 foreach 拼接成 INSERT INTO ... VALUES (...), (...), (...) 的形式
+        比逐条 INSERT 快 10~50 倍
+    -->
+    <insert id="batchInsert" parameterType="java.util.List">
+        INSERT INTO t_order (order_no, user_id, user_name, product_name, category,
+                             amount, quantity, status, province, city,
+                             create_time, update_time, deleted)
+        VALUES
+        <foreach collection="list" item="order" separator=",">
+            (#{order.orderNo}, #{order.userId}, #{order.userName}, #{order.productName}, #{order.category},
+             #{order.amount}, #{order.quantity}, #{order.status}, #{order.province}, #{order.city},
+             #{order.createTime}, #{order.updateTime}, #{order.deleted})
+        </foreach>
+    </insert>
+
 </mapper>

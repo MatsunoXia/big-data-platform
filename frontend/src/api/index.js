@@ -56,4 +56,31 @@ export function comparePerformance(params) {
   return request.get('/search/compare', { params })
 }
 
+// ==================== 数据导入 ====================
+
+/**
+ * 上传 Excel 文件
+ * @param {FormData} formData - 包含 file 字段的 FormData
+ * @returns {Promise} - 返回 progressId
+ */
+export function uploadExcel(formData) {
+  return request.post('/import/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+    timeout: 60000  // 上传超时 1 分钟
+  })
+}
+
+/**
+ * 查询导入进度
+ * @param {string} progressId - 进度ID
+ */
+export function getImportProgress(progressId) {
+  return request.get(`/import/progress/${progressId}`)
+}
+
+/** 下载 Excel 导入模板 */
+export function downloadImportTemplate() {
+  return request.get('/import/template', { responseType: 'blob' })
+}
+
 export default request

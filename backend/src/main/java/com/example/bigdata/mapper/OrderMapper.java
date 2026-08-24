@@ -65,4 +65,14 @@ public interface OrderMapper extends BaseMapper<Order> {
                                @Param("province") String province,
                                @Param("cursorId") Long cursorId,
                                @Param("pageSize") int pageSize);
+
+    /**
+     * 批量插入（定义在 XML 中，使用 foreach 拼接 VALUES）
+     */
+    void batchInsert(@Param("list") List<Order> orders);
+
+    /**
+     * 根据 order_no 列表查询已存在的 order_no（用于去重，定义在 XML 中）
+     */
+    List<String> selectOrderNosByOrderNos(@Param("list") List<String> orderNos);
 }
