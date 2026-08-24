@@ -2,7 +2,17 @@
 
 ## 项目简介
 
-通过一个电商订单管理后台，演示和实践 5 大大数据量场景的优化方案。
+通过模拟一个电商订单管理后台，演示和实践 5 大大数据量场景的优化方案。
+
+## 功能模块
+
+| 模块 | 场景 | 核心优化 | 性能提升 |
+|------|------|----------|----------|
+| 数据检索 | 百万数据分页查询 | 游标分页 + Redis 缓存 + 索引优化 | 深分页 |
+| 数据导入 | Excel 百万行导入 | EasyExcel 流式读取 + 多线程批量插入 | 100万条 |
+| 数据导出 | 百万数据导出 Excel | 异步任务 + 分段并行查询 + 流式写入 | 100万条 |
+| 前端表格 | 万级数据表格渲染 | 虚拟滚动 + 无限滚动 | DOM 节点恒定 |
+| 图表可视化 | 十万级数据点绘图 | LTTB 降采样 + Web Worker | 渲染 |
 
 ## 技术栈
 
@@ -45,70 +55,128 @@ cd backend
 mvn spring-boot:run
 ```
 
-### 4. 生成测试数据
+后端运行在 http://localhost:8080
+
+### 4. 启动前端
 
 ```bash
-# 生成10万条数据（开发阶段）
-curl -X POST "http://localhost:8080/api/data/generate?count=100000&batchSize=5000&threadCount=4"
-
-# 生成100万条数据（演示阶段）
-curl -X POST "http://localhost:8080/api/data/generate?count=1000000&batchSize=5000&threadCount=4"
+cd frontend
+npm install
+npm run dev
 ```
 
-### 5. 查看数据统计
+前端运行在 http://localhost:5173，自动代理 API 到后端。
 
-```bash
-curl http://localhost:8080/api/data/stats
-```
+### 5. 生成测试数据
+
+访问「数据管理」页面，选择数据量（建议先用 1 万条测试），点击「开始生成」。
 
 ## 项目结构
 
 ```
 big-data-platform/
 ├── sql/
-│   └── init.sql                    # 数据库DDL + 索引设计 + 面试要点
+│   └── init.sql                    # 数据库初始化脚本（建表 + 索引）
 ├── backend/
 │   ├── pom.xml
-│   └── src/main/
-│       ├── java/com/example/bigdata/
-│       │   ├── BigDataPlatformApplication.java
-│       │   ├── config/
-│       │   │   ├── MybatisPlusConfig.java    # 分页插件
-│       │   │   ├── ThreadPoolConfig.java     # 线程池配置
-│       │   │   ├── RedisConfig.java          # Redis序列化
-│       │   │   └── WebConfig.java            # 跨域配置
-│       │   ├── entity/
-│       │   │   ├── Order.java                # 订单实体
-│       │   │   ├── ExportTask.java           # 导出任务实体
-│       │   │   └── OrderExcelDTO.java        # Excel导入导出DTO
-│       │   ├── mapper/
-│       │   │   ├── OrderMapper.java
-│       │   │   └── ExportTaskMapper.java
-│       │   ├── service/
-│       │   │   ├── OrderService.java
-│       │   │   └── impl/OrderServiceImpl.java
-│       │   ├── controller/
-│       │   │   └── DataGeneratorController.java
-│       │   └── util/
-│       │       └── DataGenerator.java        # 测试数据生成器
-│       └── resources/
-│           ├── application.yml
-│           └── mapper/OrderMapper.xml
+│   └── src/main/java/com/example/bigdata/
+│       ├── config/                  # 配置类
+│       │   ├── MybatisPlusConfig    # 分页插件
+│       │   ├── RedisConfig          # Redis 序列化
+│       │   ├── ThreadPoolConfig     # 线程池配置
+│       │   └── WebConfig            # CORS + 拦截器
+│       ├── entity/                  # 实体类
+│       │   ├── Order                # 订单表
+│       │   ├── ExportTask           # 导出任务表
+│       │   └── OrderExcelDTO        # Excel 导入导出 DTO
+│       ├── mapper/                  # MyBatis Mapper
+│       │   ├── OrderMapper          # 订单 CRUD + 批量操作
+│       │   └── ExportTaskMapper     # 导出任务 CRUD
+│       ├── service/                 # 业务逻辑
+│       │   ├── OrderService         # 数据生成
+│       │   ├── OrderSearchService   # 检索（OFFSET + 游标 + 缓存）
+│       │   ├── ImportService        # 导入（EasyExcel + 多线程）
+│       │   └── ExportService        # 导出（异步 + 分段并行）
+│       ├── controller/              # API 接口
+│       ├── interceptor/             # 查询耗时拦截器
+│       ├── listener/                # EasyExcel 监听器
+│       ├── dto/                     # 数据传输对象
+│       └── util/                    # 工具类（数据生成器）
 └── frontend/
-    ├── index.html
-    ├── package.json
-    ├── vite.config.js
     └── src/
-        ├── main.js                   # 入口：Element Plus + Router
-        ├── App.vue                    # 布局：Header + Aside + Main
-        ├── router/index.js            # 路由：7个页面
-        ├── api/index.js               # Axios封装 + 耗时拦截器
-        └── views/
-            ├── Home.vue               # 首页概览 + 数据统计
-            ├── DataManage.vue         # 数据管理：生成测试数据
-            ├── ModuleSearch.vue       # 模块一：数据检索（待实现）
-            ├── ModuleImport.vue       # 模块二：数据导入（待实现）
-            ├── ModuleExport.vue       # 模块三：数据导出（待实现）
-            ├── ModuleTable.vue        # 模块四：虚拟滚动（待实现）
-            └── ModuleChart.vue        # 模块五：ECharts（待实现）
+        ├── api/                     # API 请求封装
+        ├── views/                   # 页面组件
+        │   ├── Home                 # 首页概览
+        │   ├── DataManage           # 数据管理
+        │   ├── ModuleSearch         # 检索模块
+        │   ├── ModuleImport         # 导入模块
+        │   ├── ModuleExport         # 导出模块
+        │   ├── ModuleTable          # 前端表格
+        │   └── ModuleChart          # 图表可视化
+        └── workers/                 # Web Worker
+            └── dataWorker           # LTTB 降采样 + 数据聚合
 ```
+
+## 核心优化技术详解
+
+### 1. 游标分页（检索模块）
+
+```sql
+-- 传统 OFFSET：深分页极慢
+SELECT * FROM t_order ORDER BY id DESC LIMIT 20 OFFSET 1000000;
+-- 扫描 100 万行
+
+-- 游标分页：性能稳定
+SELECT * FROM t_order WHERE id < #{lastId} ORDER BY id DESC LIMIT 20;
+-- 主键索引直接定位
+```
+
+### 2. EasyExcel 流式读取（导入模块）
+
+```
+POI XSSFWorkbook：整个 Excel 加载到内存 → 100MB 文件可能 OOM
+EasyExcel：SAX 模式逐行解析 → 内存占用恒定 ~50MB
+```
+
+### 3. 分段并行查询（导出模块）
+
+```
+单次查询 100 万条 → 锁表 30s
+分 10 段并行查询 → 每段 10 万条，总耗时 ~5s
+CompletableFuture.supplyAsync() + 自定义线程池
+```
+
+### 4. 虚拟滚动（前端表格）
+
+```
+普通渲染：10 万行 = 10 万个 DOM 节点 → 页面卡死
+虚拟滚动：只渲染可见 ~30 行，transform 定位 → DOM 恒定 ~60 个
+```
+
+### 5. LTTB 降采样（图表模块）
+
+```
+原始 10 万点直接渲染 → 浏览器卡顿
+LTTB 降采样到 1000 点 → 视觉几乎无损，渲染 < 500ms
+原理：每桶选三角形面积最大的点，保留极值和拐点
+```
+
+## API 接口
+
+| 模块 | 方法 | 路径 | 说明 |
+|------|------|------|------|
+| 数据 | GET | `/api/data/stats` | 获取数据统计 |
+| 数据 | POST | `/api/data/generate` | 生成测试数据 |
+| 检索 | GET | `/api/search/orders` | 订单检索（支持 OFFSET/游标分页） |
+| 检索 | GET | `/api/search/compare` | 性能对比（两种分页同时执行） |
+| 导入 | POST | `/api/import/upload` | 上传 Excel 文件 |
+| 导入 | GET | `/api/import/progress/{id}` | 查询导入进度 |
+| 导入 | GET | `/api/import/template` | 下载导入模板 |
+| 导出 | POST | `/api/export/start` | 启动异步导出 |
+| 导出 | GET | `/api/export/progress/{taskNo}` | 查询导出进度 |
+| 导出 | GET | `/api/export/download/{taskNo}` | 下载导出文件 |
+| 导出 | GET | `/api/export/tasks` | 导出任务列表 |
+
+## License
+
+MIT

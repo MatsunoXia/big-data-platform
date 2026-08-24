@@ -83,4 +83,37 @@ export function downloadImportTemplate() {
   return request.get('/import/template', { responseType: 'blob' })
 }
 
+// ==================== 数据导出 ====================
+
+/**
+ * 启动异步导出
+ * @param {Object} params - { status, category }
+ */
+export function startExport(params) {
+  return request.post('/export/start', null, { params })
+}
+
+/**
+ * 查询导出进度
+ * @param {string} taskNo - 任务编号
+ */
+export function getExportProgress(taskNo) {
+  return request.get(`/export/progress/${taskNo}`)
+}
+
+/**
+ * 下载导出文件
+ * @param {string} taskNo - 任务编号
+ */
+export function downloadExport(taskNo) {
+  return request.get(`/export/download/${taskNo}`, { responseType: 'blob' })
+}
+
+/**
+ * 获取最近的导出任务列表
+ */
+export function getExportTasks(limit = 10) {
+  return request.get('/export/tasks', { params: { limit } })
+}
+
 export default request
