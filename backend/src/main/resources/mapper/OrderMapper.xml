@@ -3,6 +3,109 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.example.bigdata.mapper.OrderMapper">
 
-    <!-- 后续模块会在这里添加复杂查询 -->
+    <!--
+        传统 OFFSET 分页查询
+        问题：当 offset 很大时（如第 50000 页），MySQL 需要扫描并丢弃前面的所有行
+        例：LIMIT 20 OFFSET 1000000 → MySQL 扫描 1000020 行，只返回 20 行
+    -->
+    <select id="selectByOffset" resultType="com.example.bigdata.entity.Order">
+        SELECT id, order_no, user_id, user_name, product_name, category,
+               amount, quantity, status, province, city, create_time, update_time
+        FROM t_order
+        <where>
+            deleted = 0
+            <if test="orderNo != null and orderNo != ''">
+                AND order_no = #{orderNo}
+            </if>
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+            <if test="category != null and category != ''">
+                AND category = #{category}
+            </if>
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+            <if test="province != null and province != ''">
+                AND province = #{province}
+            </if>
+        </where>
+        ORDER BY id DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <!--
+        传统 OFFSET 分页的 COUNT 查询
+        用于获取总条数，这个查询在大数据量下也很慢
+        
+        优化思路：
+        1. 无 WHERE 条件时 → 缓存 COUNT 结果（总行数不会频繁变化）
+        2. 有 WHERE 条件时 → 尽量走索引，减少扫描行数
+        3. 如果不需要精确数字 → 可以用 EXPLAIN 的 rows 估算值
+    -->
+    <select id="selectCountByCondition" resultType="long">
+        SELECT COUNT(*)
+        FROM t_order
+        <where>
+            deleted = 0
+            <if test="orderNo != null and orderNo != ''">
+                AND order_no = #{orderNo}
+            </if>
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+            <if test="category != null and category != ''">
+                AND category = #{category}
+            </if>
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+            <if test="province != null and province != ''">
+                AND province = #{province}
+            </if>
+        </where>
+    </select>
+
+    <!--
+        游标分页查询（核心优化）
+        
+        原理：
+        - 不用 OFFSET，而是用上一页最后一条的 ID 作为游标
+        - WHERE id > #{cursorId} 利用主键索引直接定位，不扫描前面的行
+        - 无论第几页，查询耗时都是稳定的
+        
+        限制：
+        - 只能"下一页"，不能跳页（但大数据场景下用户几乎不会跳页）
+        - 排序字段必须是有序且唯一的（主键 id 满足）
+        
+    -->
+    <select id="selectByCursor" resultType="com.example.bigdata.entity.Order">
+        SELECT id, order_no, user_id, user_name, product_name, category,
+               amount, quantity, status, province, city, create_time, update_time
+        FROM t_order
+        <where>
+            deleted = 0
+            <if test="cursorId != null">
+                AND id &lt; #{cursorId}
+            </if>
+            <if test="orderNo != null and orderNo != ''">
+                AND order_no = #{orderNo}
+            </if>
+            <if test="status != null and status != ''">
+                AND status = #{status}
+            </if>
+            <if test="category != null and category != ''">
+                AND category = #{category}
+            </if>
+            <if test="userId != null">
+                AND user_id = #{userId}
+            </if>
+            <if test="province != null and province != ''">
+                AND province = #{province}
+            </if>
+        </where>
+        ORDER BY id DESC
+        LIMIT #{pageSize}
+    </select>
 
 </mapper>

@@ -5,7 +5,7 @@
 
     <!-- 数据统计卡片 -->
     <el-row :gutter="20" class="stat-cards">
-      <el-col :span="8">
+      <el-col :span="6">
         <el-card shadow="hover">
           <template #header>
             <div class="card-header">
@@ -17,7 +17,7 @@
           <div class="stat-label">条</div>
         </el-card>
       </el-col>
-      <el-col :span="8">
+      <el-col :span="6">
         <el-card shadow="hover">
           <template #header>
             <div class="card-header">
@@ -29,7 +29,7 @@
           <div class="stat-label">自增主键</div>
         </el-card>
       </el-col>
-      <el-col :span="8">
+      <el-col :span="6">
         <el-card shadow="hover">
           <template #header>
             <div class="card-header">
@@ -45,7 +45,7 @@
 
     <!-- 模块列表 -->
     <el-row :gutter="20" class="module-cards">
-      <el-col :span="12" v-for="mod in modules" :key="mod.path">
+      <el-col :span="6" v-for="mod in modules" :key="mod.path">
         <el-card shadow="hover" class="module-card" @click="router.push(mod.path)">
           <div class="module-info">
             <el-icon class="module-icon" :size="40"><component :is="mod.icon" /></el-icon>
@@ -130,10 +130,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.home {
-  max-width: 1200px;
-}
-
 h2 {
   color: #303133;
   margin-bottom: 8px;

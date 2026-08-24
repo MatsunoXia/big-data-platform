@@ -13,9 +13,9 @@
           </el-button>
         </div>
       </template>
-      <el-descriptions :column="3" border>
+      <el-descriptions :column="3" border style="max-width: 600px;">
         <el-descriptions-item label="订单总量">
-          <el-tag type="primary" size="large">{{ formatNumber(stats.totalCount) }} 条</el-tag>
+          <el-tag type="primary">{{ formatNumber(stats.totalCount) }} 条</el-tag>
         </el-descriptions-item>
         <el-descriptions-item label="最大ID">{{ stats.maxId ?? '-' }}</el-descriptions-item>
         <el-descriptions-item label="最小ID">{{ stats.minId ?? '-' }}</el-descriptions-item>
@@ -172,10 +172,6 @@ onMounted(refreshStats)
 </script>
 
 <style scoped>
-.data-manage {
-  max-width: 1000px;
-}
-
 h2 {
   color: #303133;
   margin-bottom: 8px;
@@ -200,5 +196,6 @@ h2 {
   font-size: 12px;
   color: #909399;
   margin-top: 4px;
+  margin-left: 8px;
 }
 </style>
