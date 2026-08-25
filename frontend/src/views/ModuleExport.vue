@@ -106,7 +106,7 @@
       </template>
 
       <el-table :data="taskList" border stripe style="width: 100%;" v-loading="tasksLoading">
-        <el-table-column prop="taskNo" label="任务编号" width="220">
+        <el-table-column prop="taskNo" label="任务编号" width="160">
           <template #default="{ row }">
             <code style="font-size: 12px;">{{ row.taskNo }}</code>
           </template>
@@ -351,10 +351,6 @@ onBeforeUnmount(stopPolling)
 </script>
 
 <style scoped>
-.module-export {
-  max-width: 1000px;
-}
-
 h2 {
   color: #303133;
   margin-bottom: 8px;
