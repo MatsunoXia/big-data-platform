@@ -138,18 +138,19 @@ public class ExportServiceImpl implements ExportService {
             int processedCount = 0;
 
             // 按分段顺序处理（保证 Excel 中数据有序）
+            List<CompletableFuture<List<Order>>> futures = new ArrayList<>();
             for (int i = 0; i < SEGMENT_COUNT; i++) {
                 long segStart = minId + i * segmentSize;
                 long segEnd = Math.min(segStart + segmentSize, maxId + 1);
                 if (segStart > maxId) break;
 
                 // 并行查询当前分段
-                final long startId = segStart;
-                final long endId = segEnd;
-                CompletableFuture<List<Order>> future = CompletableFuture.supplyAsync(
-                        () -> orderMapper.selectByIdRange(startId, endId), threadPool);
+                futures.add(CompletableFuture.supplyAsync(
+                        () -> orderMapper.selectByIdRange(segStart, segEnd), threadPool));
+            }
 
-                // 等待查询完成
+            // 全部提交后再等待
+            for (CompletableFuture<List<Order>> future : futures) {
                 List<Order> segmentData = future.get(2, TimeUnit.MINUTES);
 
                 // 转换为 DTO 并写入
